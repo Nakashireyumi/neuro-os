@@ -10,11 +10,6 @@ To install this application, you will have to download and setup the repository 
 <br><br>Then install the python packages from ``requirements.txt``, and then Neuro-OS requires version ``0.0.1-alpha`` of the windows-api.
 <br><br>As all Neuro-OS does is port the websocket functions from windows-api's interaction-api to the Neuro-sdk.
 
-### Deprecation warning
-This is no longet needed, as neuro-os now have a gitmodule for that now.
-Thanks [KTrain5169](https://github.com/KTrain5169)
-(P.S. I didn't know a git module existed - Nakurity)
-
 <br><br>You can download it here: [``https://github.com/Nakashireyumi/windows-api/tree/0.0.1-alpha``](https://github.com/Nakashireyumi/windows-api/tree/0.0.1-alpha)
 <br>Then you'll have to extract the source folder, and place them in the root repository path. So here:
 ```
