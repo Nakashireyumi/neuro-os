@@ -1,9 +1,10 @@
 # todo: make this export and initialoze the action schema for the neuro-client
 import os
 import importlib
+from pathlib import Path
 
 from neuro_api.command import check_action
-
+ACTIONS_DIR = Path(__file__).resolve("Actions")
 
 def load_actions(game_name):
   # Load all Action definitions dynamically

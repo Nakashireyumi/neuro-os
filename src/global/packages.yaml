@@ -1,0 +1,7 @@
+# src/global/packages.yaml
+# this filepath is for vibe coders
+
+packages:
+  python:
+    interaction-client: "src.dev.interaction-client"
+    interaction-server: "src.dev.backend.winapi.interaction-server"

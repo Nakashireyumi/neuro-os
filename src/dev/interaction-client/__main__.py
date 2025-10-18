@@ -8,18 +8,17 @@ connects to it, and sends actions like mouse/keyboard control for "Neurosama".
 
 import trio
 
-from .client import neuro_client
-from ..utils.winapi_management import start_windows_api_server, stop_windows_api_server
+from ..neuro_integration.client import neuro_client
+from .client import WindowsAPIClient
 
 # ------------------------------------------
 # ENTRY POINT
 # ------------------------------------------
 if __name__ == "__main__":
     try:
-        start_windows_api_server()
         trio.run(neuro_client)
     except [KeyboardInterrupt, Exception]:
         print(Exception)
         print("\n[INTERRUPTED] Shutting down...")
     finally:
-        stop_windows_api_server()
+        WindowsAPIClient.send_message(name="shutdown")

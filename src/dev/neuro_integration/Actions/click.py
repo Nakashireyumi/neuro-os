@@ -3,7 +3,7 @@ from neuro_api.command import Action
 def schema():
     return Action(
         "click",
-        "If coordinates is provided, move the mouse to that area, then click",
+        "If coordinates for the mouse is provided, move the mouse to that area, then click",
         {
             "type": "object",
             "properties": {
