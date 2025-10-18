@@ -5,3 +5,11 @@ neuro-sdk
 .venv
 .vscode
 __pycache__
+
+# repository-setup lfs binaries that should be downloaded and not commited
+src/bin/git
+src/bin/python
+setup.exe
+
+# Nodejs packages
+node_modules

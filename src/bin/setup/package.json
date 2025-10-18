@@ -1,0 +1,24 @@
+{
+  "name": "setup",
+  "version": "0.0.1",
+  "description": "The repository setup file for nakashireyumi/neuro-os",
+  "license": "ISC",
+  "author": "Nakurity",
+  "type": "commonjs",
+  "bin": "repository-setup.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "pkg": {
+    "assets": [
+      "../bin/**/*",
+      "windows-api/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ]
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
+}
