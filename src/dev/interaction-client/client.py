@@ -18,9 +18,9 @@ class NeuroClient(AbstractNeuroAPI):
     Subclassing the SDK’s WebSocket client, handling incoming action requests from Neuro,
     then forwarding them to Windows via your WebSocket interface.
     """
-    def __init__(self, websocket, game_name):
+    def __init__(self, websocket):
         self.websocket = websocket
-        self.game_name = game_name
+        self.name = "windows-user"
         self.registered_actions = []
 
     async def write_to_websocket(self, data: str) -> None:
@@ -31,11 +31,11 @@ class NeuroClient(AbstractNeuroAPI):
 
     def initialize(self):
         # Send startup command
-        startup_cmd = startup_command(self.game_name)
+        startup_cmd = startup_command(self.name)
         await self.send_command_data(startup_cmd)
 
         # Register actions
-        actions = [] # leave empty for now. I can on.y edit one file at a time on github
+        actions = load_actions(self.name)
 
         register_cmd = actions_register_command(self.game_name, actions)
         await self.send_command_data(register_cmd)
