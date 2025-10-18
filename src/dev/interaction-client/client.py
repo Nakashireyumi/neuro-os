@@ -41,6 +41,12 @@ class NeuroClient(AbstractNeuroAPI):
         await self.send_command_data(register_cmd)
         self.registered_actions = actions
 
+    async def handle_unknown_command(self, command: str, data: dict | None):
+        if command == "action":
+            await self.handle_action(data)
+        else:
+            await super().handle_unknown_command(command, data)
+
     async def handle_action(self, action: Action):
         """
         This is called by the SDK when Neuro-sama requests an action.
