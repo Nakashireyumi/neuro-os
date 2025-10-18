@@ -23,4 +23,4 @@ def load_actions(game_name):
           actions.append(act)
           print(f"[ACTION] Loaded: {act.name}")
 
-return actions
+  return actions
