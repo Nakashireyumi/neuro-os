@@ -34,7 +34,6 @@ def main():
             continue
 
         try:
-            cmd = [sys.executable, "-m", module]
             proc = subprocess.Popen([sys.executable, "-m", module], env=env)
             processes.append((name, proc))
         except Exception as e:

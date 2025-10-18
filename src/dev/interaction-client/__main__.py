@@ -15,8 +15,4 @@ from .client import WindowsAPIClient
 # ENTRY POINT
 # ------------------------------------------
 if __name__ == "__main__":
-    try:
-        asyncio.run(neuro_client)
-    except Exception as e:
-        print(e)
-        print("\n[INTERRUPTED] Shutting down...")
+    asyncio.run(neuro_client())
