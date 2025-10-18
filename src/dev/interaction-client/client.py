@@ -3,7 +3,7 @@ import json
 import websockets
 
 from ..utils.loadConfig import load_config
-from neuro_api.trio_ws import TrioNeuroAPI  # or whichever class your version uses
+from neuro_api.trio_ws import AbstractNeuroAPI
 from neuro_api.command import Action  # and other command helpers
 
 cfg = load_config()
@@ -13,14 +13,37 @@ AUTH_TOKEN = cfg.get("auth_token", "replace-with-a-strong-secret")
 
 # -------- Neurosama / Neuro-API integration --------
 
-class NeuroClient(TrioNeuroAPI):
+class NeuroClient(AbstractNeuroAPI):
     """
     Subclassing the SDK’s WebSocket client, handling incoming action requests from Neuro,
     then forwarding them to Windows via your WebSocket interface.
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(game_title="Windows", *args, **kwargs)
-        # You can store additional state here
+    def __init__(self, websocket, game_name):
+        self.websocket = websocket
+        self.game_name = game_name
+        self.registered_actions = []
+
+    async def write_to_websocket(self, data: str) -> None:
+        await self.websocket.send(data)
+
+    async def read_from_websocket(self) -> str:
+        return await self.websocket.recv()
+
+    def initialize(self):
+        # Send startup command
+        startup_cmd = startup_command(self.game_name)
+        await self.send_command_data(startup_cmd)
+
+        # Register actions
+        actions = [] # leave empty for now. I can on.y edit one file at a time on github
+
+        # Validate actions before registering
+        for action in actions:
+            check_action(action)
+
+        register_cmd = actions_register_command(self.game_name, actions)
+        await self.send_command_data(register_cmd)
+        self.registered_actions = actions
 
     async def handle_action(self, action: Action):
         """
