@@ -37,3 +37,10 @@ root/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
+```
+
+## Starting the client
+```cmd
+(.venv) PS A:\neuro-os> python -m src.dev.interaction-client
+```
+This assumes you are in an virtual python environment by now. And the command above starts the client
