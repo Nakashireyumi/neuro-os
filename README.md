@@ -49,6 +49,6 @@ root/
 
 ## Starting the client
 ```cmd
-(.venv) PS A:\neuro-os> python -m src.dev.interaction-client
+(.venv) PS A:\neuro-os> python -m src.dev.launch
 ```
 This assumes you are in an virtual python environment by now. And the command above starts the client
