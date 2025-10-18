@@ -55,5 +55,13 @@ class NeuroClient(TrioNeuroAPI):
         print("[NEURO] Disconnected from Neuro API")
 
 async def neuro_client():
-    client = NeuroClient()
-    client.connect()
+    uri = f"ws://{HOST}:{PORT}"
+    async with websockets.connect(uri) as websocket:
+        client = NeuroClient(websocket)
+
+        # Read messages in a loop
+        while True:
+            try:
+                await client.read_message()
+            except websockets.exceptions.ConnectionClosed:
+                break
