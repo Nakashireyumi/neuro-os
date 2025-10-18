@@ -81,7 +81,7 @@ class NeuroClient(AbstractNeuroAPI):
         print("[NEURO] Disconnected from Neuro API")
 
 async def neuro_client():
-    uri = f"ws://{HOST}:{PORT}"
+    uri = f"ws://127.0.0.1:3323"
     async with websockets.connect(uri) as websocket:
         client = NeuroClient(websocket)
 

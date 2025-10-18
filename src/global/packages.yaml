@@ -3,5 +3,5 @@
 
 packages:
   python:
-    interaction-client: "src.dev.interaction-client"
     interaction-server: "src.dev.backend.winapi.interaction-server"
+    interaction-client: "src.dev.interaction-client"

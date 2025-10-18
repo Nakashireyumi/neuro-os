@@ -3,7 +3,7 @@ import json
 
 from ..utils.loadConfig import load_config
 
-cfg = load_config
+cfg = load_config()
 HOST = cfg.get("host", "127.0.0.1")
 PORT = int(cfg.get("port", 8765))
 AUTH_TOKEN = cfg.get("auth_token", "replace-with-a-strong-secret")
