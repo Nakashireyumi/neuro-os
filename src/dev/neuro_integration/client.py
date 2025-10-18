@@ -3,7 +3,7 @@ import json
 import websockets
 
 from ..utils.loadConfig import load_config
-from neuro_api.trio_ws import AbstractNeuroAPI
+from neuro_api.api import AbstractNeuroAPI, NeuroAction
 from neuro_api.command import *
 from . import load_actions
 
@@ -22,7 +22,7 @@ class NeuroClient(AbstractNeuroAPI):
     def __init__(self, websocket):
         self.websocket = websocket
         self.name = "windows-user"
-        self.registered_actions = []
+        super().__init__(self.name)
 
     async def write_to_websocket(self, data: str) -> None:
         await self.websocket.send(data)
@@ -32,30 +32,21 @@ class NeuroClient(AbstractNeuroAPI):
 
     async def initialize(self):
         # Send startup command
-        startup_cmd = startup_command(self.name)
-        await self.send_command_data(startup_cmd)
+        await self.send_startup_command()
 
         # Register actions
-        actions = load_actions(self.name)
+        actions = load_actions()
 
-        register_cmd = actions_register_command(self.game_name, actions)
-        await self.send_command_data(register_cmd)
-        self.registered_actions = actions
+        await self.register_actions(actions)
 
-    async def handle_unknown_command(self, command: str, data: dict | None):
-        if command == "action":
-            await self.handle_action(data)
-        else:
-            await super().handle_unknown_command(command, data)
-
-    async def handle_action(self, action: Action):
+    async def handle_action(self, action: NeuroAction):
         """
         This is called by the SDK when Neuro-sama requests an action.
         e.g. action.name might be "move", "click", etc.
         action.data is a dict of parameters.
         """
         name = action.name
-        params = action.data or {}
+        params = json.loads(action.data) or {}
         print(f"[NEURO] Received action: {name}, params: {params}")
 
         # Forward to Windows API via WebSocket
@@ -72,7 +63,7 @@ class NeuroClient(AbstractNeuroAPI):
 
             # Optionally, send back an “action result” to Neuro-sama
             # using the SDK’s method. e.g.:
-            return self.send_action_result(action.id, resp)
+            await self.send_action_result(action.id_, resp)
 
     async def on_connect(self):
         print("[NEURO] Connected to Neuro API")
@@ -81,14 +72,14 @@ class NeuroClient(AbstractNeuroAPI):
         print("[NEURO] Disconnected from Neuro API")
 
 async def neuro_client():
-    uri = f"ws://127.0.0.1:3323"
+    uri = f"ws://127.0.0.1:8000"
     async with websockets.connect(uri) as websocket:
         client = NeuroClient(websocket)
+        await client.initialize()
 
         # Read messages in a loop
         while True:
             try:
                 await client.read_message()
-            except [websockets.exceptions.ConnectionClosed, websockets.exceptions.WebSocketException, Exception] as e:
-                print(e)
+            except websockets.exceptions.ConnectionClosed:
                 break

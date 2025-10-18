@@ -4,9 +4,9 @@ import importlib
 from pathlib import Path
 
 from neuro_api.command import check_action
-ACTIONS_DIR = Path(__file__).resolve("Actions")
+ACTIONS_DIR = Path(__file__).parent / "Actions"
 
-def load_actions(game_name):
+def load_actions():
   # Load all Action definitions dynamically
   actions = []
   for file in os.listdir(ACTIONS_DIR):
