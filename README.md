@@ -11,11 +11,6 @@ Neuro OS is an forwarding method that allows Neuro & Evilyn to use the windows o
 
 ## Installation
 
-> [!NOTE]
-> Thanks [KTrain5169](https://github.com/KTrain5169) for adding the submodule and somewhat rewriting this section.
->
-> (P.S. I didn't know a git module existed - Nakurity)
-
 To install this application, you will have to download and setup this repository.
 EXE coming soon:tm:.
 
