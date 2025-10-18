@@ -1,0 +1,3 @@
+[submodule "windows-api"]
+	path = windows-api
+	url = https://github.com/Nakashireyumi/windows-api.git
