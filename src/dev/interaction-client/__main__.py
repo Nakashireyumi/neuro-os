@@ -6,20 +6,17 @@ This client automatically launches the Windows interactions API server,
 connects to it, and sends actions like mouse/keyboard control for "Neurosama".
 """
 
-import trio
+import asyncio
 
-from .client import neuro_client
-from ..utils.winapi_management import start_windows_api_server, stop_windows_api_server
+from ..neuro_integration.client import neuro_client
+from .client import WindowsAPIClient
 
 # ------------------------------------------
 # ENTRY POINT
 # ------------------------------------------
 if __name__ == "__main__":
     try:
-        start_windows_api_server()
-        trio.run(neuro_client)
-    except [KeyboardInterrupt, Exception]:
-        print(Exception)
+        asyncio.run(neuro_client)
+    except Exception as e:
+        print(e)
         print("\n[INTERRUPTED] Shutting down...")
-    finally:
-        stop_windows_api_server()
