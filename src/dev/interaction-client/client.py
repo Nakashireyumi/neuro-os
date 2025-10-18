@@ -19,4 +19,4 @@ class WindowsAPIClient:
             }
             await ws.send(json.dumps(msg))
             resp = await ws.recv()
-            return resp;
+            return resp

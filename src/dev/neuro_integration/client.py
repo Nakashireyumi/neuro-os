@@ -3,7 +3,7 @@ import json
 import websockets
 
 from ..utils.loadConfig import load_config
-from neuro_api.trio_ws import AbstractNeuroAPI
+from neuro_api.api import AbstractNeuroAPI, NeuroAction
 from neuro_api.command import *
 from . import load_actions
 
@@ -38,7 +38,7 @@ class NeuroClient(AbstractNeuroAPI):
         # Register actions
         actions = load_actions(self.name)
 
-        register_cmd = actions_register_command(self.game_name, actions)
+        register_cmd = actions_register_command(self.name, actions)
         await self.send_command_data(register_cmd)
         self.registered_actions = actions
 
@@ -48,7 +48,7 @@ class NeuroClient(AbstractNeuroAPI):
         else:
             await super().handle_unknown_command(command, data)
 
-    async def handle_action(self, action: Action):
+    async def handle_action(self, action: NeuroAction):
         """
         This is called by the SDK when Neuro-sama requests an action.
         e.g. action.name might be "move", "click", etc.
@@ -72,7 +72,7 @@ class NeuroClient(AbstractNeuroAPI):
 
             # Optionally, send back an “action result” to Neuro-sama
             # using the SDK’s method. e.g.:
-            return self.send_action_result(action.id, resp)
+            await self.send_action_result(action.id, resp)
 
     async def on_connect(self):
         print("[NEURO] Connected to Neuro API")
@@ -84,6 +84,7 @@ async def neuro_client():
     uri = f"ws://127.0.0.1:3323"
     async with websockets.connect(uri) as websocket:
         client = NeuroClient(websocket)
+        await client.initialize()
 
         # Read messages in a loop
         while True:
