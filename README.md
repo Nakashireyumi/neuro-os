@@ -7,6 +7,11 @@ Neuro OS is an forwarding method that allows Neuro & Evilyn to use the windows o
 >
 > Use at your own risk.
 
+Though this caution notice can be ignored for development purposes, this caution is only here for when this is actually attached to the neuro backend.
+All neuro-os could allow neuro to do is spam actions that make you lose control of your mouse, when she sees you doing something she doesn't like.
+<br><br>This is because neuro-os currently has no user priority, and executes the most recent action (either by neuro, or you).
+Though execute priority will be added later, along with an planned safety monitor.
+
 ## Installation
 
 To install this application, you will have to download and setup this repository.
