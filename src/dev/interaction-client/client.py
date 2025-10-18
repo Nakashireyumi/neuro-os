@@ -63,5 +63,6 @@ async def neuro_client():
         while True:
             try:
                 await client.read_message()
-            except websockets.exceptions.ConnectionClosed:
+            except [websockets.exceptions.ConnectionClosed, websockets.exceptions.WebSocketException, Exception] as e:
+                print(e)
                 break
