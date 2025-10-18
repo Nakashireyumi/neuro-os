@@ -4,7 +4,7 @@ import websockets
 
 from ..utils.loadConfig import load_config
 from neuro_api.trio_ws import AbstractNeuroAPI
-from neuro_api.command import Action  # and other command helpers
+from neuro_api.command import startup_command
 
 cfg = load_config()
 HOST = cfg.get("host", "127.0.0.1")
@@ -36,10 +36,6 @@ class NeuroClient(AbstractNeuroAPI):
 
         # Register actions
         actions = [] # leave empty for now. I can on.y edit one file at a time on github
-
-        # Validate actions before registering
-        for action in actions:
-            check_action(action)
 
         register_cmd = actions_register_command(self.game_name, actions)
         await self.send_command_data(register_cmd)
