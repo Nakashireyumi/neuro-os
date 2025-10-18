@@ -1,1 +1,14 @@
+from neuro_api.command import Action
 
+action = Action(
+    name="click",
+    description="If coordinates is ptovided, move the mouse to that area, then click",
+    schema={
+        "type": "object",
+        "properties": {
+            "coordinates": {"type": "integer", "x": 0, "y": 0},
+            "button": {"type": "string", "button": "left"}
+        },
+        "required": ["button"]
+    }
+)
