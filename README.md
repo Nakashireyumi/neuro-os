@@ -2,7 +2,7 @@
 Neuro OS is an forwarding method that allows Neuro & Evilyn to use the windows operatng system.
 > [!CAUTION]
 > This software allows neuro / evilyn to interface with your windows machine thru direct user inputs (i.e. mouse, keyboard, etc).
-> <br>You can very easily lose control, depending on neuro / evilyn's mood during usage. We highly recommend a virtual machine.<br><br>
+> <br>You can very easily lose control, depending on neuro's / evilyn's mood during usage. We highly recommend a virtual machine.<br><br>
 > Use at your own risk.
 
 ## Installation
