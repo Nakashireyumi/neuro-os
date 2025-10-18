@@ -7,10 +7,8 @@ def schema():
         {
             "type": "object",
             "properties": {
-                "coordinates": {
-                    "type": "object",
-                    "properties": {"x": {"type": "integer"}, "y": {"type": "integer"}}
-                },
+                "x": {"type": "integer"},
+                "y": {"type": "integer"},
                 "button": {"type": "string", "enum": ["left", "right", "middle"]}
             },
             "required": ["button"]
