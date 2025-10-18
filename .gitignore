@@ -1,0 +1,8 @@
+# Ignore local environments during development and usage
+windows-api
+neuro-sdk
+
+# Python packagees
+.venv
+.vscode
+__pycache__
