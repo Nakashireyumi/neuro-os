@@ -1,0 +1,14 @@
+intermediary:
+  host: 127.0.0.1
+  port: 8765
+  auth_token: super-secret-token
+  relay_queue: relay_message_queue.pkl
+nakurity-backend:
+  host: 127.0.0.1
+  port: 8001
+nakurity-client:
+  host: 127.0.0.1
+  port: 8000
+dependency-authentication:
+  neuro-os:
+    auth_token: super-secret-token

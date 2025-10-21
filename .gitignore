@@ -1,7 +1,13 @@
 # Ignore local environments during development and usage
 neuro-sdk
+neuro-api-jippity
 
 # Python packagees
 .venv
 .vscode
 __pycache__
+
+# bin/ stuff
+node_modules
+*.exe
+*.log
