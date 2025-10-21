@@ -1,6 +1,0 @@
-neuro_relay:
-  auth_token: super-secret-token
-  host: 127.0.0.1
-  port: 8765
-integrations:
-  enabled: true

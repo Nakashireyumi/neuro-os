@@ -1,8 +1,0 @@
-host: 127.0.0.1
-port: 8765
-auth_token: replace-with-a-strong-secret
-screenshot_dir: ./screenshots
-failsafe: true
-pause: 0.05
-neuro_relay:
-  auth_token: super-secret-token
