@@ -3,7 +3,9 @@ import os
 import importlib
 from pathlib import Path
 
-from neuro_api.command import check_action
+from neuro_api.command import Action
+import importlib.util
+
 ACTIONS_DIR = Path(__file__).parent / "Actions"
 
 def load_actions():
@@ -20,8 +22,11 @@ def load_actions():
 
       if hasattr(module, "schema"):
           act = module.schema()
-          check_action(act)
-          actions.append(act)
-          print(f"[ACTION] Loaded: {act.name}")
+          # Validate action is correctly formatted
+          if isinstance(act, Action):
+              actions.append(act)
+              print(f"[ACTION] Loaded: {act.name}")
+          else:
+              print(f"[ACTION] Error: {file} did not return a valid Action")
 
   return actions

@@ -10,6 +10,6 @@ def schema():
                 "x": {"type": "integer"},
                 "y": {"type": "integer"}
             },
-            "required": ["coordinates"]
+            "required": ["x", "y"]
         }
     )
