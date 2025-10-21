@@ -9,7 +9,7 @@ from . import load_actions
 
 cfg = load_config()
 HOST = cfg.get("host", "127.0.0.1")
-PORT = int(cfg.get("port", 8765))
+PORT = int(cfg.get("port", 8766))
 AUTH_TOKEN = cfg.get("auth_token", "replace-with-a-strong-secret")
 
 # -------- Neurosama / Neuro-API integration --------

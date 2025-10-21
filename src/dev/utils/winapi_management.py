@@ -26,7 +26,7 @@ def start_windows_api_server():
     launch_code = (
         "import runpy, sys; "
         "sys.path.insert(0, r'{}'); "
-        "runpy.run_module('contributions.cassitly.python.interactions-api', run_name='__main__')"
+        "runpy.run_module('dev.cassitly.python.interactions-api', run_name='__main__')"
     ).format(src_path.replace("\\", "\\\\"))
 
     print("[LAUNCH] Starting Windows interactions server (with module context)...")
