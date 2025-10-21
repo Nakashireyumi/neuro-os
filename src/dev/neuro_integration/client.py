@@ -49,6 +49,19 @@ class NeuroClient(AbstractNeuroAPI):
         params = json.loads(action.data) or {}
         print(f"[NEURO] Received action: {name}, params: {params}")
 
+        # Handle Neuro-OS internal actions locally (do not forward to Windows API)
+        if name == "context_update":
+            # Accept and log context for diagnostics; treat as no-op for Windows API
+            result = {
+                "status": "ok",
+                "result": {
+                    "message": "context_update received by neuro-os",
+                    "summary_len": len(params.get("context_summary", ""))
+                }
+            }
+            await self.send_action_result(action.id_, json.dumps(result))
+            return
+
         # Forward to Windows API via WebSocket
         uri = f"ws://{HOST}:{PORT}"
         async with websockets.connect(uri) as ws:
