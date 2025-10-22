@@ -25,6 +25,16 @@ except ImportError as e:
 
 from pathlib import Path
 
+try:
+    from .ocr_detector import OCRDetector
+except ImportError:
+    OCRDetector = None
+
+try:
+    from .vision_api_client import VisionAPIClient
+except ImportError:
+    VisionAPIClient = None
+
 from ..types.neuro_types import (
     ScreenRegion, RegionType, BoundingBox, Coordinates,
     ContextData, ContextType, SystemState, NeuroAction,
@@ -393,16 +403,27 @@ class ContextExtractor:
 class RegionalizationCore:
     """Main regionalization system coordinator"""
     
-    def __init__(self, plugin_registry: Optional[PluginRegistry] = None):
+    def __init__(self, plugin_registry: Optional[PluginRegistry] = None, enable_vision_api: bool = False):
         self.plugin_registry = plugin_registry or PluginRegistry()
         self.window_detector = WindowDetector()
         self.basic_detector = BasicRegionDetector()
         self.context_extractor = ContextExtractor()
         self.message_builder = NeuroMessageBuilder()
+        self.ocr_detector = OCRDetector() if OCRDetector else None
+        
+        # Vision API for AI-powered UI analysis
+        self.vision_client = None
+        if enable_vision_api and VisionAPIClient:
+            self.vision_client = VisionAPIClient()
+            logger.info("Vision API client initialized")
         
         self.current_state: Optional[SystemState] = None
         self.update_interval = 2.0  # seconds
         self.running = False
+        self._last_ocr_elements = []
+        self._last_vision_analysis = None
+        self._vision_update_counter = 0
+        self._vision_update_interval = 10  # Update vision every 10 regular updates (20 seconds)
         
     async def start(self):
         """Start the regionalization system"""
@@ -415,6 +436,14 @@ class RegionalizationCore:
     async def stop(self):
         """Stop the regionalization system"""
         self.running = False
+        
+        # Release vision API session
+        if self.vision_client:
+            try:
+                self.vision_client.release_session()
+            except Exception:
+                pass
+        
         logger.info("Stopping regionalization system")
     
     async def _update_loop(self):
@@ -472,6 +501,33 @@ class RegionalizationCore:
                 available_actions=available_actions,
                 timestamp=datetime.now()
             )
+            
+            # Run OCR detection on current screen
+            if self.ocr_detector:
+                try:
+                    ocr_elements = self.ocr_detector.detect_elements()
+                    self._last_ocr_elements = ocr_elements
+                    logger.debug(f"OCR detected {len(ocr_elements)} UI elements")
+                except Exception as e:
+                    logger.warning(f"OCR detection failed: {e}")
+            
+            # Run vision API analysis periodically (less frequent than OCR)
+            if self.vision_client:
+                self._vision_update_counter += 1
+                if self._vision_update_counter >= self._vision_update_interval:
+                    self._vision_update_counter = 0
+                    try:
+                        screenshot = await self._take_screenshot()
+                        if screenshot and screenshot != b"screenshot_placeholder":
+                            analysis = self.vision_client.analyze_screenshot(
+                                screenshot_bytes=screenshot,
+                                prompt="Analyze this Windows UI screenshot. List all visible UI elements (buttons, links, text fields, menus) with their locations (top-left, center, bottom-right, etc). Be specific and concise."
+                            )
+                            if analysis:
+                                self._last_vision_analysis = analysis
+                                logger.info(f"Vision analysis updated: {len(analysis)} chars")
+                    except Exception as e:
+                        logger.warning(f"Vision API analysis failed: {e}")
             
             # Update message builder
             self.message_builder.update_state(self.current_state)
@@ -584,7 +640,17 @@ class RegionalizationCore:
     
     def get_context_message(self) -> str:
         """Get formatted context message for Neuro"""
-        return self.message_builder.build_context_message()
+        base_message = self.message_builder.build_context_message(self._last_ocr_elements, self.ocr_detector)
+        
+        # Append vision analysis if available
+        if self._last_vision_analysis:
+            base_message += f"\n\nAI Vision Analysis:\n{self._last_vision_analysis}"
+        
+        return base_message
+    
+    def get_ocr_elements(self):
+        """Get last detected OCR elements"""
+        return self._last_ocr_elements
     
     async def force_update(self):
         """Force an immediate system state update"""

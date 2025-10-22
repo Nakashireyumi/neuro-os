@@ -146,7 +146,7 @@ def trace(frame, event, arg):
 # Apply trace configuration
 apply_trace_config(trace)
 if config_loader.is_trace_enabled():
-    print(color(f"🧠 SmartTrace enabled — writing logs to {LOG_PATH}", "magenta", "bold"))
+    print(color(f"🧠 SmartTrace enabled", "magenta", "bold"))
 else:
     print(color(f"🧠 SmartTrace disabled by configuration", "yellow", "bold"))
 
