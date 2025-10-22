@@ -1,6 +1,7 @@
 # Ignore local environments during development and usage
 neuro-sdk
 neuro-api-jippity
+neuro-api-tony
 
 # Python packagees
 .venv
