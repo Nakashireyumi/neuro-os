@@ -2,7 +2,7 @@
 debug:
   enabled: true
   trace:
-    enabled: true
+    enabled: false  # Disabled - too verbose for normal operation
     verbose: false
     show_file_path: false
     show_timestamp: true
