@@ -196,7 +196,7 @@ def load_package_map(path=Path("src/global/packages.yaml")):
 
 def start_neuro_relay():
     """Start neuro-relay if it exists"""
-    relay_path = Path(__file__).parents[3] / "neuro-relay"
+    relay_path = Path(__file__).parents[2] / "neuro-relay"
     if not relay_path.exists():
         print("[LAUNCHER] neuro-relay not found at", relay_path)
         return None
