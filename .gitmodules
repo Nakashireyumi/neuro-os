@@ -3,5 +3,5 @@
 	url = https://github.com/Nakashireyumi/windows-api.git
 
 [submodule "neuro-relay"]
-	path = windows-api
+	path = neuro-relay
 	url = https://github.com/Nakashireyumi/neuro-relay.git
