@@ -9,6 +9,8 @@ import os
 import linecache
 import inspect
 import time
+import signal
+import atexit
 from datetime import datetime
 
 print("PID:", os.getpid())
@@ -32,10 +34,14 @@ TRACE_INCLUDE = trace_config.get("include_paths", ["src/dev"])
 TRACE_EXCLUDE_FUNCS = set(trace_config.get("exclude_functions", ["write_log", "trace"]))
 TRACE_EVENTS = set(trace_config.get("events", ["call", "return", "exception"]))
 
-# Set log path from config or default
+# Set log path from config or default with timestamp
 log_config = config_loader.get_logging_config()
-LOG_PATH = Path(log_config.get("file", "logs/neuro_os_trace.log"))
+log_file_base = log_config.get("file", "logs/neuro_os_trace.log")
+log_path_template = Path(log_file_base)
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+LOG_PATH = log_path_template.parent / f"{log_path_template.stem}_{timestamp}{log_path_template.suffix}"
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+print(f"[TRACE] Log file: {LOG_PATH}")
 
 start_time = time.perf_counter()
 
@@ -150,12 +156,85 @@ if config_loader.is_trace_enabled():
 else:
     print(color(f"🧠 SmartTrace disabled by configuration", "yellow", "bold"))
 
+# Global list to track all spawned processes
+processes = []
+
+def cleanup_processes():
+    """Terminate all spawned processes gracefully."""
+    print("\n[SHUTDOWN] Cleaning up spawned processes...")
+    for name, proc in processes:
+        if proc.poll() is None:  # Process is still running
+            print(f"[SHUTDOWN] Terminating {name} (PID: {proc.pid})...")
+            try:
+                # Send SIGTERM for graceful shutdown
+                proc.terminate()
+                # Wait up to 5 seconds for graceful shutdown
+                try:
+                    proc.wait(timeout=5)
+                    print(f"[SHUTDOWN] {name} terminated gracefully")
+                except subprocess.TimeoutExpired:
+                    print(f"[SHUTDOWN] {name} did not respond, forcing kill...")
+                    proc.kill()
+                    proc.wait()
+                    print(f"[SHUTDOWN] {name} killed")
+            except Exception as e:
+                print(f"[SHUTDOWN] Error terminating {name}: {e}")
+    processes.clear()
+    print("[SHUTDOWN] Cleanup complete")
+
+def signal_handler(sig, frame):
+    """Handle termination signals."""
+    sig_name = signal.Signals(sig).name if hasattr(signal, 'Signals') else str(sig)
+    print(f"\n[SIGNAL] Received {sig_name}, initiating shutdown...")
+    cleanup_processes()
+    sys.exit(0)
+
 def load_package_map(path=Path("src/global/packages.yaml")):
     with open(path, "r") as f:
         data = yaml.safe_load(f)
     return data.get("packages", {}).get("python", {})
 
+def start_neuro_relay():
+    """Start neuro-relay if it exists"""
+    relay_path = Path(__file__).parents[3] / "neuro-relay"
+    if not relay_path.exists():
+        print("[LAUNCHER] neuro-relay not found at", relay_path)
+        return None
+    
+    print(f"[LAUNCHER] Starting neuro-relay from {relay_path}")
+    
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(relay_path / "src") + os.pathsep + env.get("PYTHONPATH", "")
+    
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "src.dev.nakurity"],
+            cwd=relay_path,
+            env=env
+        )
+        print(f"[LAUNCHER] neuro-relay started with PID: {proc.pid}")
+        return proc
+    except Exception as e:
+        print(f"[LAUNCHER] Failed to start neuro-relay: {e}")
+        return None
+
 def main():
+    # Register signal handlers for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)   # Handle Ctrl+C
+    signal.signal(signal.SIGTERM, signal_handler)  # Handle termination
+    
+    # Register cleanup on normal exit
+    atexit.register(cleanup_processes)
+    
+    print(f"[LAUNCHER] Launcher PID: {os.getpid()}")
+    print("[LAUNCHER] Press Ctrl+C to stop all services\n")
+    
+    # Start neuro-relay first
+    relay_proc = start_neuro_relay()
+    if relay_proc:
+        processes.append(("neuro-relay", relay_proc))
+        time.sleep(2)  # Give relay time to start before starting clients
+    
     package_map = load_package_map()
     if not package_map:
         print("No packages found in YAML.")
@@ -165,9 +244,8 @@ def main():
     # Ensure src/ is on PYTHONPATH
     env["PYTHONPATH"] = str(Path(__file__).resolve().parents[3]) + os.pathsep + env.get("PYTHONPATH", "")
 
-    processes = []
     for name, module in package_map.items():
-        print(f"Starting {name} -> {module}")
+        print(f"[LAUNCHER] Starting {name} -> {module}")
         try:
             # Try to import to validate
             importlib.import_module(module)
@@ -179,14 +257,25 @@ def main():
         try:
             proc = subprocess.Popen([sys.executable, "-m", module], env=env)
             processes.append((name, proc))
+            print(f"[LAUNCHER] {name} started with PID: {proc.pid}")
         except Exception as e:
             print(f"[LAUNCH ERROR] Could not start {module}: {e}")
             print(traceback.format_exc())
 
-    # Wait for all to finish
-    for name, proc in processes:
-        proc.wait()
-        print(f"{name} exited with code {proc.returncode}")
+    if not processes:
+        print("[LAUNCHER] No processes started successfully")
+        return
+    
+    print(f"\n[LAUNCHER] All services started. Running {len(processes)} process(es).")
+    
+    # Wait for all to finish or until interrupted
+    try:
+        for name, proc in processes:
+            proc.wait()
+            print(f"[LAUNCHER] {name} exited with code {proc.returncode}")
+    except KeyboardInterrupt:
+        # Signal handler will take care of cleanup
+        pass
 
 if __name__ == "__main__":
     main()
