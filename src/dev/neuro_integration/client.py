@@ -33,6 +33,15 @@ class NeuroClient(AbstractNeuroAPI):
         self._context_task = None
         self._reg = RegionalizationCore() if RegionalizationCore else None
         self._action_in_progress = False
+        
+        # Cache full context data for pagination
+        self._cached_context = {
+            'ocr_elements': [],
+            'windows': [],
+            'state': None,
+            'timestamp': None
+        }
+        
         super().__init__(self.name)
 
     async def write_to_websocket(self, data: str) -> None:
@@ -80,9 +89,10 @@ class NeuroClient(AbstractNeuroAPI):
             params = {}
         print(f"[NEURO] Received action: {name}, params: {params}")
 
-        # Handle context_update specially
-        if name == "context_update":
-            await self.send_action_result(action.id_, True, "context_update received by neuro-os")
+        # Handle pagination and context actions
+        if name in ["get_more_text", "get_more_windows", "refresh_context", "context_update"]:
+            success, message = await self._handle_context_action(name, params)
+            await self.send_action_result(action.id_, success, message)
             return
 
         # Execute the Windows action and wait for actual result
@@ -101,6 +111,161 @@ class NeuroClient(AbstractNeuroAPI):
 
     async def on_disconnect(self):
         print("[NEURO] Disconnected from Neuro API")
+    
+    async def _handle_context_action(self, name: str, params: dict) -> tuple[bool, str]:
+        """Handle context pagination and refresh actions"""
+        try:
+            if name == "context_update":
+                return True, "context_update received by neuro-os"
+            
+            if name == "get_more_text":
+                return await self._get_more_text(params)
+            
+            if name == "get_more_windows":
+                return await self._get_more_windows(params)
+            
+            if name == "refresh_context":
+                return await self._refresh_context(params)
+            
+            return False, f"Unknown context action: {name}"
+        
+        except Exception as e:
+            print(f"[CONTEXT_ACTION_ERR] {e}")
+            import traceback
+            traceback.print_exc()
+            return False, f"Context action failed: {str(e)}"
+    
+    async def _get_more_text(self, params: dict) -> tuple[bool, str]:
+        """Get paginated text/UI elements"""
+        if not self._reg:
+            return False, "Regionalization not available"
+        
+        offset = params.get('offset', 0)
+        limit = params.get('limit', 50)
+        filter_type = params.get('filter_type', 'all')
+        
+        # Get cached OCR elements
+        ocr_elements = self._cached_context.get('ocr_elements', [])
+        
+        if not ocr_elements:
+            return False, "No OCR data available. Wait for next context update."
+        
+        # Filter by type if requested
+        if filter_type != 'all':
+            filtered = [e for e in ocr_elements if e.element_type == filter_type]
+        else:
+            filtered = ocr_elements
+        
+        # Paginate
+        paginated = filtered[offset:offset + limit]
+        total = len(filtered)
+        
+        if not paginated:
+            return True, f"No more items. Total available: {total}"
+        
+        # Format response
+        lines = []
+        lines.append(f"Text Items ({offset + 1}-{offset + len(paginated)} of {total}):")
+        for elem in paginated:
+            lines.append(f'  - [{elem.element_type}] "{elem.text}" at ({elem.center_x}, {elem.center_y})')
+        
+        if offset + len(paginated) < total:
+            remaining = total - (offset + len(paginated))
+            lines.append(f"\n... and {remaining} more items. Use get_more_text with offset={offset + limit} to see more.")
+        
+        return True, "\n".join(lines)
+    
+    async def _get_more_windows(self, params: dict) -> tuple[bool, str]:
+        """Get paginated window list"""
+        if not self._reg:
+            return False, "Regionalization not available"
+        
+        offset = params.get('offset', 0)
+        limit = params.get('limit', 20)
+        include_minimized = params.get('include_minimized', False)
+        
+        # Get cached windows
+        state = self._cached_context.get('state')
+        if not state or not state.all_regions:
+            return False, "No window data available. Wait for next context update."
+        
+        # Filter windows
+        windows = [r for r in state.all_regions if r.region_type.value == 'window']
+        
+        # Paginate
+        paginated = windows[offset:offset + limit]
+        total = len(windows)
+        
+        if not paginated:
+            return True, f"No more windows. Total available: {total}"
+        
+        # Format response
+        lines = []
+        lines.append(f"Windows ({offset + 1}-{offset + len(paginated)} of {total}):")
+        for i, window in enumerate(paginated, start=offset + 1):
+            center_x = window.bounds.x + window.bounds.width // 2
+            center_y = window.bounds.y + window.bounds.height // 2
+            is_focused = window.metadata.get('focused', False) if window.metadata else False
+            focus_marker = " [FOCUSED]" if is_focused else ""
+            title = window.title[:60] if window.title and len(window.title) > 60 else window.title
+            lines.append(f"  {i}. {title}{focus_marker}")
+            lines.append(f"     App: {window.application}, Position: ({window.bounds.x}, {window.bounds.y}), Size: {window.bounds.width}x{window.bounds.height}")
+            lines.append(f"     Click center: ({center_x}, {center_y})")
+        
+        if offset + len(paginated) < total:
+            remaining = total - (offset + len(paginated))
+            lines.append(f"\n... and {remaining} more windows. Use get_more_windows with offset={offset + limit} to see more.")
+        
+        return True, "\n".join(lines)
+    
+    async def _refresh_context(self, params: dict) -> tuple[bool, str]:
+        """Force context refresh with custom settings"""
+        if not self._reg:
+            return False, "Regionalization not available"
+        
+        detail_level = params.get('detail_level', 'standard')
+        include_ocr = params.get('include_ocr', True)
+        include_vision = params.get('include_vision', False)
+        max_items = params.get('max_items_per_category', 15)
+        
+        try:
+            # Force update regionalization
+            await self._reg.force_update()
+            state = self._reg.get_current_state()
+            
+            if not state:
+                return False, "Unable to get current state"
+            
+            # Get context with custom settings
+            ocr_elements = self._reg.get_ocr_elements() if include_ocr else []
+            
+            # Build context message based on detail level
+            from src.types.neuro_types import NeuroMessageBuilder
+            builder = NeuroMessageBuilder()
+            builder.update_state(state)
+            
+            # For now, use standard context builder
+            # TODO: Implement detail level variants
+            context_msg = builder.build_context_message(ocr_elements if include_ocr else None, self._reg.ocr_detector if include_ocr else None)
+            
+            # Cache the data
+            self._cached_context = {
+                'ocr_elements': ocr_elements,
+                'windows': [r for r in state.all_regions if r.region_type.value == 'window'],
+                'state': state,
+                'timestamp': datetime.now()
+            }
+            
+            # Send as context update
+            await self.send_context(context_msg, silent=True)
+            
+            return True, f"Context refreshed with {detail_level} detail level. {len(ocr_elements)} UI elements detected."
+        
+        except Exception as e:
+            print(f"[REFRESH_ERR] {e}")
+            import traceback
+            traceback.print_exc()
+            return False, f"Failed to refresh context: {str(e)}"
 
     async def _execute_windows_action(self, name: str, params: dict) -> tuple[bool, str]:
         """Execute a Windows action and return (success, message)."""
@@ -191,9 +356,19 @@ class NeuroClient(AbstractNeuroAPI):
                 # Only send if context actually changed
                 if context_msg != last_context_msg:
                     print(f"[CONTEXT] State changed, sending update")
+                    
+                    # Cache data for pagination
+                    ocr_elements = self._reg.get_ocr_elements()
+                    self._cached_context = {
+                        'ocr_elements': ocr_elements,
+                        'windows': [r for r in state.all_regions if r.region_type.value == 'window'],
+                        'state': state,
+                        'timestamp': datetime.now()
+                    }
+                    
                     await self.send_context(context_msg, silent=True)
                     last_context_msg = context_msg
-                    print("[CONTEXT] Context sent successfully")
+                    print(f"[CONTEXT] Context sent successfully (cached {len(ocr_elements)} OCR elements)")
                 else:
                     print("[CONTEXT] No change, skipping update")
                     
