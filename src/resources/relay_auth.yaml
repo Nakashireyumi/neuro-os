@@ -1,6 +1,7 @@
 relay_connection:
   host: 127.0.0.1
-  port: 8765
+  port: 8765  # Intermediary port for monitoring
+  backend_port: 8001  # Neuro-relay backend port (fake Neuro backend for integrations)
   auth_token: super-secret-token
 integrations:
   spotify:
