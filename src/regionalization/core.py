@@ -652,6 +652,54 @@ class RegionalizationCore:
         """Get last detected OCR elements"""
         return self._last_ocr_elements
     
+    def get_ocr_elements_paginated(self, offset: int = 0, limit: int = 50, filter_type: Optional[str] = None) -> tuple[List, int]:
+        """Get paginated OCR elements with optional filtering
+        
+        Args:
+            offset: Starting index for pagination
+            limit: Maximum number of items to return
+            filter_type: Filter by element type (button, text, link, etc.) or None for all
+        
+        Returns:
+            tuple of (paginated_elements, total_count)
+        """
+        elements = self._last_ocr_elements
+        
+        # Apply filter if specified
+        if filter_type and filter_type != 'all':
+            elements = [e for e in elements if hasattr(e, 'element_type') and e.element_type == filter_type]
+        
+        total = len(elements)
+        paginated = elements[offset:offset + limit]
+        
+        return paginated, total
+    
+    def get_windows_paginated(self, offset: int = 0, limit: int = 20, include_minimized: bool = False) -> tuple[List[ScreenRegion], int]:
+        """Get paginated list of windows
+        
+        Args:
+            offset: Starting index for pagination
+            limit: Maximum number of items to return
+            include_minimized: Whether to include minimized windows
+        
+        Returns:
+            tuple of (paginated_windows, total_count)
+        """
+        if not self.current_state or not self.current_state.all_regions:
+            return [], 0
+        
+        # Filter for windows only
+        windows = [r for r in self.current_state.all_regions if r.region_type == RegionType.WINDOW]
+        
+        # Filter out minimized if requested (based on window size heuristic)
+        if not include_minimized:
+            windows = [w for w in windows if w.bounds.width > 100 and w.bounds.height > 100]
+        
+        total = len(windows)
+        paginated = windows[offset:offset + limit]
+        
+        return paginated, total
+    
     async def force_update(self):
         """Force an immediate system state update"""
         await self._update_system_state()
