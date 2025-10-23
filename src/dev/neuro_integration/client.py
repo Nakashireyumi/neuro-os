@@ -334,54 +334,80 @@ class NeuroClient(AbstractNeuroAPI):
         print("[CONTEXT] Starting context publishing loop (2s check, send on change)")
         last_context_msg = None
         
-        while True:
-            # Check state more frequently but only send if changed
-            if not self._reg:
-                await asyncio.sleep(5)
-                continue
-                
-            if getattr(self, "_action_in_progress", False):
-                await asyncio.sleep(2)
-                continue
-                
-            try:
-                await self._reg.force_update()
-                state = self._reg.get_current_state()
-                if not state:
+        try:
+            while True:
+                # Check state more frequently but only send if changed
+                if not self._reg:
+                    await asyncio.sleep(5)
+                    continue
+                    
+                if getattr(self, "_action_in_progress", False):
                     await asyncio.sleep(2)
                     continue
                     
-                context_msg = self._reg.get_context_message()
-                
-                # Only send if context actually changed
-                if context_msg != last_context_msg:
-                    print(f"[CONTEXT] State changed, sending update")
+                try:
+                    await self._reg.force_update()
+                    state = self._reg.get_current_state()
+                    if not state:
+                        await asyncio.sleep(2)
+                        continue
+                        
+                    context_msg = self._reg.get_context_message()
                     
-                    # Cache data for pagination
-                    ocr_elements = self._reg.get_ocr_elements()
-                    self._cached_context = {
-                        'ocr_elements': ocr_elements,
-                        'windows': [r for r in state.all_regions if r.region_type.value == 'window'],
-                        'state': state,
-                        'timestamp': datetime.now()
-                    }
+                    # Only send if context actually changed
+                    if context_msg != last_context_msg:
+                        print(f"[CONTEXT] State changed, sending update")
+                        
+                        # Cache data for pagination
+                        ocr_elements = self._reg.get_ocr_elements()
+                        self._cached_context = {
+                            'ocr_elements': ocr_elements,
+                            'windows': [r for r in state.all_regions if r.region_type.value == 'window'],
+                            'state': state,
+                            'timestamp': datetime.now()
+                        }
+                        
+                        await self.send_context(context_msg, silent=True)
+                        last_context_msg = context_msg
+                        print(f"[CONTEXT] Context sent successfully (cached {len(ocr_elements)} OCR elements)")
+                    else:
+                        print("[CONTEXT] No change, skipping update")
+                        
+                except KeyboardInterrupt:
+                    # Re-raise to exit gracefully
+                    raise
+                except asyncio.CancelledError:
+                    # Task was cancelled, exit gracefully
+                    print("[CONTEXT] Context loop cancelled, shutting down")
+                    raise
+                except Exception as e:
+                    print(f"[CONTEXT_ERR] Failed to publish context: {e}")
+                    import traceback
+                    traceback.print_exc()
                     
-                    await self.send_context(context_msg, silent=True)
-                    last_context_msg = context_msg
-                    print(f"[CONTEXT] Context sent successfully (cached {len(ocr_elements)} OCR elements)")
-                else:
-                    print("[CONTEXT] No change, skipping update")
-                    
-            except Exception as e:
-                print(f"[CONTEXT_ERR] Failed to publish context: {e}")
-                import traceback
-                traceback.print_exc()
-                
-            await asyncio.sleep(2)  # Check every 2 seconds
+                await asyncio.sleep(2)  # Check every 2 seconds
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            print("[CONTEXT] Context publishing loop stopped")
+            # Clean shutdown
+            return
 
 
 async def neuro_client():
-    uri = f"ws://127.0.0.1:8000"
+    # Load relay config to get backend port
+    try:
+        from ..utils.loadConfig import load_config
+        cfg = load_config()
+        # neuro-os connects to neuro-relay's nakurity-backend (port 8001), not the real backend (8000)
+        backend_port = cfg.get('relay_connection', {}).get('backend_port', 8001)
+        backend_host = cfg.get('relay_connection', {}).get('host', '127.0.0.1')
+    except Exception as e:
+        print(f"[NEURO_CLIENT] Warning: Could not load config, using defaults: {e}")
+        backend_host = '127.0.0.1'
+        backend_port = 8001
+    
+    uri = f"ws://{backend_host}:{backend_port}"
+    print(f"[NEURO_CLIENT] Connecting to neuro-relay backend at {uri}")
+    
     async with websockets.connect(uri) as websocket:
         client = NeuroClient(websocket)
         await client.initialize()
