@@ -263,22 +263,44 @@ class PluginRegistry:
 
 # === Message Building ===
 
+class DetailLevel(Enum):
+    """Detail levels for context messages"""
+    MINIMAL = "minimal"      # Only critical info
+    STANDARD = "standard"    # Default, balanced
+    DETAILED = "detailed"    # More comprehensive
+    FULL = "full"           # Everything available
+
 class NeuroMessageBuilder:
     """Builds formatted messages for Neuro"""
     
-    def __init__(self):
+    def __init__(self, max_text_items: int = 15, max_windows: int = 10, detail_level: DetailLevel = DetailLevel.STANDARD):
         self.current_state: Optional[SystemState] = None
+        self.max_text_items = max_text_items
+        self.max_windows = max_windows
+        self.detail_level = detail_level
+        # Cache for pagination
+        self._full_text_items: List[Dict[str, Any]] = []
+        self._full_windows: List[ScreenRegion] = []
     
     def update_state(self, state: SystemState):
         """Update the current system state"""
         self.current_state = state
     
-    def build_context_message(self, ocr_elements=None, ocr_detector=None) -> str:
-        """Build a context message for Neuro"""
+    def build_context_message(self, ocr_elements=None, ocr_detector=None, max_text_items: Optional[int] = None, max_windows: Optional[int] = None) -> str:
+        """Build a context message for Neuro with pagination support
+        
+        Args:
+            ocr_elements: OCR detected elements
+            ocr_detector: OCR detector instance
+            max_text_items: Override default max text items to show
+            max_windows: Override default max windows to show
+        """
         if not self.current_state:
             return "No system state available"
         
         state = self.current_state
+        max_text = max_text_items if max_text_items is not None else self.max_text_items
+        max_wins = max_windows if max_windows is not None else self.max_windows
         
         # Build message sections
         sections = []
@@ -356,12 +378,16 @@ class NeuroMessageBuilder:
                     })
             
             if detected_texts:
+                # Cache full list for pagination
+                self._full_text_items = sorted(detected_texts, key=lambda x: x['conf'], reverse=True)
+                
                 sections.append(f"\nDetected Text on Screen ({len(detected_texts)} items):")
-                # Show first 15 most prominent text items
-                for item in sorted(detected_texts, key=lambda x: x['conf'], reverse=True)[:15]:
+                # Show first N most prominent text items (configurable)
+                for item in self._full_text_items[:max_text]:
                     sections.append(f"  - \"{item['text']}\" at ({item['x']}, {item['y']})")
-                if len(detected_texts) > 15:
-                    sections.append(f"  ... and {len(detected_texts) - 15} more text items")
+                if len(detected_texts) > max_text:
+                    remaining = len(detected_texts) - max_text
+                    sections.append(f"  ... and {remaining} more text items. Use get_more_text action to see more.")
                     
         except Exception as ocr_err:
             # OCR failed - may not have tesseract installed
@@ -412,22 +438,40 @@ class NeuroMessageBuilder:
         # List all visible windows with coordinates
         window_regions = [r for r in state.all_regions if r.region_type.value == 'window']
         if window_regions:
+            # Cache full list for pagination
+            self._full_windows = window_regions
+            
             sections.append(f"\nVisible Windows ({len(window_regions)}):")
-            for i, window in enumerate(window_regions[:10]):  # Show first 10
+            for i, window in enumerate(window_regions[:max_wins]):  # Show first N (configurable)
                 center_x = window.bounds.x + window.bounds.width // 2
                 center_y = window.bounds.y + window.bounds.height // 2
                 is_focused = window.metadata.get('focused', False) if window.metadata else False
                 focus_marker = " [FOCUSED]" if is_focused else ""
                 # Truncate title to 60 chars
                 title = window.title[:60] if window.title and len(window.title) > 60 else window.title
-                sections.append(
-                    f"  {i+1}. {title}{focus_marker}\n"
-                    f"     Position: ({window.bounds.x}, {window.bounds.y}), "
-                    f"Size: {window.bounds.width}x{window.bounds.height}, "
-                    f"Click center: ({center_x}, {center_y})"
-                )
-            if len(window_regions) > 10:
-                sections.append(f"  ... and {len(window_regions) - 10} more windows")
+                
+                # Adjust detail level
+                if self.detail_level == DetailLevel.MINIMAL:
+                    sections.append(f"  {i+1}. {title}{focus_marker}")
+                elif self.detail_level == DetailLevel.STANDARD or self.detail_level == DetailLevel.DETAILED:
+                    sections.append(
+                        f"  {i+1}. {title}{focus_marker}\n"
+                        f"     Position: ({window.bounds.x}, {window.bounds.y}), "
+                        f"Size: {window.bounds.width}x{window.bounds.height}, "
+                        f"Click center: ({center_x}, {center_y})"
+                    )
+                else:  # FULL
+                    sections.append(
+                        f"  {i+1}. {title}{focus_marker}\n"
+                        f"     App: {window.application}\n"
+                        f"     Position: ({window.bounds.x}, {window.bounds.y}), "
+                        f"Size: {window.bounds.width}x{window.bounds.height}, "
+                        f"Click center: ({center_x}, {center_y}), "
+                        f"Visible: {window.visible}, Enabled: {window.enabled}"
+                    )
+            if len(window_regions) > max_wins:
+                remaining = len(window_regions) - max_wins
+                sections.append(f"  ... and {remaining} more windows. Use get_more_windows action to see more.")
         
         # OCR-detected UI elements
         if ocr_elements and ocr_detector:
@@ -466,6 +510,14 @@ class NeuroMessageBuilder:
         
         return message
     
+    def get_cached_text_items(self) -> List[Dict[str, Any]]:
+        """Get cached text items for pagination"""
+        return self._full_text_items
+    
+    def get_cached_windows(self) -> List[ScreenRegion]:
+        """Get cached windows for pagination"""
+        return self._full_windows
+    
     def build_region_info(self, region: ScreenRegion) -> str:
         """Build detailed information about a specific region"""
         info = [
@@ -496,7 +548,7 @@ class NeuroMessageBuilder:
 
 __all__ = [
     # Enums
-    'RegionType', 'ContextType', 'Priority', 'PluginType',
+    'RegionType', 'ContextType', 'Priority', 'PluginType', 'DetailLevel',
     
     # Core data structures  
     'Coordinates', 'BoundingBox', 'ScreenRegion', 'ContextData', 
