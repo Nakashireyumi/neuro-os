@@ -33,6 +33,8 @@ class NeuroClient(AbstractNeuroAPI):
         self._context_task = None
         self._reg = RegionalizationCore() if RegionalizationCore else None
         self._action_in_progress = False
+        self._actions_registered = False
+        self._pending_actions = None
         
         # Cache full context data for pagination
         self._cached_context = {
@@ -51,13 +53,12 @@ class NeuroClient(AbstractNeuroAPI):
         return await self.websocket.recv()
 
     async def initialize(self):
-        # Send startup command
-        await self.send_startup_command()
+        # Send startup command with retry
+        await self._send_startup_with_retry()
 
-        # Register actions
+        # Register actions with retry
         actions = load_actions()
-
-        await self.register_actions(actions)
+        await self._register_actions_with_retry(actions)
 
         # Send a one-time capability/context primer so Neuro understands this game
         try:
@@ -108,9 +109,54 @@ class NeuroClient(AbstractNeuroAPI):
 
     async def on_connect(self):
         print("[NEURO] Connected to Neuro API")
+        # Try to register actions if they weren't registered successfully before
+        if not self._actions_registered and self._pending_actions:
+            print("[NEURO] Attempting to register pending actions...")
+            try:
+                await self.register_actions(self._pending_actions)
+                self._actions_registered = True
+                print(f"[NEURO] Successfully registered {len(self._pending_actions)} pending actions")
+            except Exception as e:
+                print(f"[NEURO] Failed to register pending actions: {e}")
 
     async def on_disconnect(self):
         print("[NEURO] Disconnected from Neuro API")
+        self._actions_registered = False
+    
+    async def _send_startup_with_retry(self, max_retries: int = 5, retry_delay: float = 2.0):
+        """Send startup command with retry logic for connection issues"""
+        for attempt in range(max_retries):
+            try:
+                await self.send_startup_command()
+                print(f"[NEURO] Startup command sent successfully")
+                return
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"[NEURO] Startup command failed (attempt {attempt + 1}/{max_retries}): {e}")
+                    print(f"[NEURO] Retrying in {retry_delay}s...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    print(f"[NEURO] Failed to send startup command after {max_retries} attempts: {e}")
+                    raise
+    
+    async def _register_actions_with_retry(self, actions, max_retries: int = 5, retry_delay: float = 2.0):
+        """Register actions with retry logic for connection issues"""
+        self._pending_actions = actions  # Store for potential reregistration
+        
+        for attempt in range(max_retries):
+            try:
+                await self.register_actions(actions)
+                print(f"[NEURO] Successfully registered {len(actions)} actions")
+                self._actions_registered = True
+                return
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"[NEURO] Action registration failed (attempt {attempt + 1}/{max_retries}): {e}")
+                    print(f"[NEURO] Retrying in {retry_delay}s...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    print(f"[NEURO] Failed to register actions after {max_retries} attempts: {e}")
+                    print(f"[NEURO] Will continue listening for backend to become available...")
     
     async def _handle_context_action(self, name: str, params: dict) -> tuple[bool, str]:
         """Handle context pagination and refresh actions"""

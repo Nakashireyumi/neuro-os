@@ -233,7 +233,9 @@ def main():
     relay_proc = start_neuro_relay()
     if relay_proc:
         processes.append(("neuro-relay", relay_proc))
-        time.sleep(2)  # Give relay time to start before starting clients
+        print("[LAUNCHER] Waiting for neuro-relay to initialize...")
+        time.sleep(5)  # Give relay more time to start and connect to backend before starting clients
+        print("[LAUNCHER] Starting neuro-os clients...")
     
     package_map = load_package_map()
     if not package_map:
