@@ -1,7 +1,0 @@
-[submodule "windows-api"]
-	path = windows-api
-	url = https://github.com/Nakashireyumi/windows-api.git
-
-[submodule "neuro-relay"]
-	path = neuro-relay
-	url = https://github.com/Nakashireyumi/neuro-relay.git
