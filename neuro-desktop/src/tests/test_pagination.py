@@ -16,7 +16,7 @@ async def test_pagination():
     # Test 1: Import actions
     print("\n[Test 1] Loading actions...")
     try:
-        from src.dev.neuro_integration import load_actions
+        from src.dev.integration import load_actions
         actions = load_actions()
         action_names = [a.name for a in actions]
         

@@ -115,9 +115,9 @@ except Exception as e:
 # 4) Test pagination action schemas
 print("\n[4] Testing pagination action schemas...")
 try:
-    from src.dev.neuro_integration.Actions.get_more_text import schema as get_more_text_schema
-    from src.dev.neuro_integration.Actions.get_more_windows import schema as get_more_windows_schema
-    from src.dev.neuro_integration.Actions.refresh_context import schema as refresh_context_schema
+    from src.dev.integration.Actions.get_more_text import schema as get_more_text_schema
+    from src.dev.integration.Actions.get_more_windows import schema as get_more_windows_schema
+    from src.dev.integration.Actions.refresh_context import schema as refresh_context_schema
     from neuro_api.command import Action
     
     actions = [

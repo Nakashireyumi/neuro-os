@@ -30,3 +30,7 @@ def load_actions():
               print(f"[ACTION] Error: {file} did not return a valid Action")
 
   return actions
+
+from .client import NeuroClient
+
+__all__ = ["NeuroClient", "load_actions"]

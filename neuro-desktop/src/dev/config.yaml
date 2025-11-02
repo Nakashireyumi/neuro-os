@@ -2,7 +2,7 @@
 debug:
   enabled: true
   trace:
-    enabled: false  # Disabled - too verbose for normal operation
+    enabled: true
     verbose: false
     show_file_path: false
     show_timestamp: true
@@ -25,7 +25,7 @@ debug:
       # - "line"  # Uncomment for very verbose line-by-line tracing
   logging:
     level: "INFO"
-    file: "logs/neuro_os_debug.log"
+    file: "neuro_os_debug.log"
     console: true
 
 connection:

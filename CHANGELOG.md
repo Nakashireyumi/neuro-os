@@ -4,6 +4,11 @@ All notable changes and improvements to Neuro-OS are documented here.
 
 ---
 
+## [0.0.3a-dev] - 2025-11-02 - Developmental Cache
+No info
+
+---
+
 ## [0.0.2-alpha] - 2025-01-22 - Major UI Context & Security Update
 
 ### 🎉 Major Features Added
