@@ -309,6 +309,64 @@ def list_backups():
         logger.error(f"Error listing backups: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+# Add to imports
+from src.plugins import get_plugin_manager
+
+# Initialize plugin manager
+plugin_manager = get_plugin_manager()
+
+@app.route('/plugins')
+def plugins_page():
+    """Plugins management page"""
+    return render_template('plugins.html')
+
+@app.route('/api/plugins', methods=['GET'])
+async def list_plugins_api():
+    """API: List all plugins"""
+    try:
+        manifests = await plugin_manager.discover_plugins()
+        plugins_data = []
+        
+        for manifest in manifests:
+            plugins_data.append({
+                **manifest.to_dict(),
+                'loaded': manifest.id in plugin_manager.loaded_plugins
+            })
+        
+        return jsonify({
+            'success': True,
+            'plugins': plugins_data
+        })
+    except Exception as e:
+        logger.error(f"Error listing plugins: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/plugins/<plugin_id>/enable', methods=['POST'])
+async def enable_plugin_api(plugin_id: str):
+    """API: Enable/load a plugin"""
+    try:
+        success = await plugin_manager.load_plugin(plugin_id)
+        if success:
+            return jsonify({'success': True, 'message': f'Plugin {plugin_id} enabled'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to load plugin'}), 400
+    except Exception as e:
+        logger.error(f"Error enabling plugin {plugin_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/plugins/<plugin_id>/disable', methods=['POST'])
+async def disable_plugin_api(plugin_id: str):
+    """API: Disable/unload a plugin"""
+    try:
+        success = await plugin_manager.unload_plugin(plugin_id)
+        if success:
+            return jsonify({'success': True, 'message': f'Plugin {plugin_id} disabled'})
+        else:
+            return jsonify({'success': False, 'error': 'Plugin not loaded'}), 400
+    except Exception as e:
+        logger.error(f"Error disabling plugin {plugin_id}: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Create templates directory and basic templates if they don't exist
     templates_dir = Path(__file__).parent / 'templates'
