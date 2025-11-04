@@ -54,14 +54,6 @@ cd ..
 python -m neuro-desktop
 ```
 
-### Automated Setup (Recommended)
-
-Use the setup script to install everything:
-
-```bash
-
-```
-
 ## 🚀 Usage
 
 ### Start Neuro Desktop
