@@ -41,8 +41,20 @@ tracer_config = TracerConfig(
 )
 tracer = Tracer(tracer_config)
 
+import threading
+from flask import Flask
+
 async def start():
     taskslist = [] # Tasks list
+
+    # Launch Admin Dashboard in separate thread (non-blocking)
+    admin_thread = threading.Thread(
+        target=launch_admin_dashboard,
+        daemon=True,
+        name="AdminDashboard"
+    )
+    admin_thread.start()
+    logger.info("Admin Dashboard launched on http://127.0.0.1:5000")
 
     WindowsAPIServer = getattr(importlib.import_module("windows-api"), "WindowsAPIServer")
     taskslist.append(asyncio.create_task( # Launch Windows API server
@@ -73,5 +85,10 @@ async def start():
         print("Server stopped.")
     finally:
         print("[SHUTDOWN] Cleanup complete")
+
+def launch_admin_dashboard():
+    """Launch the Flask admin dashboard in a separate thread"""
+    from src.admin.dashboard import app
+    app.run(debug=False, host='127.0.0.1', port=5000, use_reloader=False)
 
 __all__ = ["start"]
