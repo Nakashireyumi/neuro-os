@@ -1,3 +1,6 @@
+// IMPORTANT INFORMATION: this file is to be built into an binary .exe file, with pkg
+// and is to be used to install neuro-desktop, without cloning THE REPOSITORY!!!
+
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -10,18 +13,14 @@ const winApiRepoDir = path.join(projectRoot, "windows-api");
 const winApiRepoUrl = "https://github.com/Nakashireyumi/windows-api.git";
 const winApiRequirements = path.join(
   winApiRepoDir,
-  "src",
-  "contributions",
-  "cassitly",
-  "python",
   "requirements.txt"
 );
 
-const neuroOSRepoDir = path.join(projectRoot, "neuro-os");
-const neuroOSRepoUrl = "https://github.com/Nakashireyumi/neuro-os.git";
+const neuroOSRepoDir = path.join(projectRoot, "neuro-desktop");
+const neuroOSRepoUrl = "https://github.com/Nakashireyumi/neuro-desktop.git";
 const neuroOSRequirements = path.join(neuroOSRepoDir, "requirements.txt");
 
-const mainScript = path.join(projectRoot, "neuro-os", "src", "dev", "launch.py");
+const mainScript = path.join(projectRoot, "neuro-desktop");
 
 // --------------- HELPERS ----------------
 function run(command, args = [], options = {}) {
