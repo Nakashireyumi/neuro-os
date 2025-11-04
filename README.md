@@ -7,9 +7,7 @@ Neuro-OS allows Neuro and Evil Neuro to interact with Windows through direct con
 > [!CAUTION]
 > This software allows Neuro/Evil to control your Windows machine directly (mouse, keyboard, clicks).
 > You may lose control of your system temporarily, depending on their mood.
-> **We highly recommend using a virtual machine for testing.**
->
-> Use at your own risk.
+> **We highly recommend using a virtual machine for usage with Neuro and Evil.**
 
 **For Development**: This caution mainly applies when connected to the live Neuro backend. During development, Neuro-OS simply executes the most recent action from the API. A safety monitor and user priority system are planned for future releases.
 
@@ -32,30 +30,28 @@ Neuro-OS allows Neuro and Evil Neuro to interact with Windows through direct con
 
 ```bash
 # 1. Clone repository with submodules
-git clone --recursive https://github.com/Nakashireyumi/neuro-os.git
-cd neuro-os
+git clone --recursive https://github.com/Nakashireyumi/neuro-desktop.git
+cd neuro-desktop
 
 # 2. Initialize submodules (if not cloned with --recursive)
 git submodule update --init --recursive
 
-# 3. Install neuro-os Python dependencies
-pip install -r requirements.txt
+# 3. Setup an virtual environment
+python -m venv .venv
+.venv\Scripts\activate  # Windows
 
-# 4. Install OCR dependencies (for UI detection)
-pip install easyocr opencv-python pillow numpy requests
+# 4. Install neuro-os Python dependencies
+pip install -r requirements.txt
 
 # 5. Setup windows-api submodule
 cd windows-api
-# Install vcpkg dependencies (requires vcpkg)
-vcpkg install
-# Setup Python venv and install dependencies
-python -m venv .venv
-.venv\Scripts\activate  # Windows
-pip install -r src/contributions/cassitly/python/requirements.txt
+
+# Install dependencies
+pip install -r requirements.txt
 cd ..
 
-# 6. Run neuro-os
-python -m src.dev.launch
+# 6. Run neuro-desktop
+python -m neuro-desktop
 ```
 
 ### Automated Setup (Recommended)
@@ -63,34 +59,20 @@ python -m src.dev.launch
 Use the setup script to install everything:
 
 ```bash
-# Install and run
-node src/bin/neuro-setup.js --run
 
-# Or just install dependencies
-node src/bin/neuro-setup.js
-```
-
-### Optional: Enable Vision API
-
-For AI-powered screenshot analysis:
-
-```python
-# In src/dev/neuro_integration/client.py, line 34
-self._reg = RegionalizationCore(enable_vision_api=True)
 ```
 
 ## 🚀 Usage
 
-### Start Neuro-OS
+### Start Neuro Desktop
 
 ```bash
-python -m src.dev.launch
+python -m neuro-desktop
 ```
 
 This starts:
 - Windows interaction server (port 8766)
-- Neuro API integration (port 8000)
-- Regionalization system with OCR
+- Neuro Desktop Integration
 
 ### What Neuro Can See
 
@@ -122,7 +104,7 @@ Visible Windows:
 ## 📁 Repository Structure
 
 ```
-neuro-os/
+repository/
 ├── src/
 │   ├── regionalization/       # UI detection system
 │   │   ├── core.py           # Main regionalization
@@ -137,20 +119,6 @@ neuro-os/
 ├── CHANGELOG.md              # Version history
 ├── QUICKSTART.md             # Quick start guide
 └── README.md                 # This file
-```
-
-## 🔧 Configuration
-
-### OCR Update Frequency
-```python
-# In src/regionalization/core.py, line 421
-self.update_interval = 2.0  # seconds (default: 2s)
-```
-
-### Vision API Frequency
-```python
-# In src/regionalization/core.py, line 426
-self._vision_update_interval = 10  # cycles (default: 20s)
 ```
 
 ## 📚 Documentation
@@ -190,6 +158,6 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ---
 
-**Version**: 0.0.2-alpha  
+**Version**: 0.0.3-devbuild  
 **Last Updated**: 2025-01-22  
 **Status**: 🚧 Alpha - Active Development
