@@ -367,6 +367,51 @@ async def disable_plugin_api(plugin_id: str):
         logger.error(f"Error disabling plugin {plugin_id}: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# Add new routes for Neuro control settings
+
+@app.route('/neuro-control')
+def neuro_control_page():
+    """Neuro control settings page"""
+    # Load Neuro control config
+    neuro_config = load_neuro_control_config()
+    return render_template('neuro_control.html', config=neuro_config)
+
+@app.route('/api/neuro-control', methods=['GET'])
+def get_neuro_control_api():
+    """API: Get Neuro control settings"""
+    config = load_neuro_control_config()
+    return jsonify(config)
+
+@app.route('/api/neuro-control', methods='POST'])
+def save_neuro_control_api():
+    """API: Save Neuro control settings"""
+    try:
+        data = request.get_json()
+        save_neuro_control_config(data)
+        return jsonify({'success': True, 'message': 'Settings saved'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+def load_neuro_control_config():
+    """Load Neuro control configuration"""
+    config_path = Path(__file__).parents[2] / 'src' / 'resources' / 'neuro_control.yaml'
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            return yaml.safe_load(f) or {}
+    return {
+        'enabled': False,
+        'theme': 'Dark',
+        'autostart': False,
+        'allowed_actions': []
+    }
+
+def save_neuro_control_config(data):
+    """Save Neuro control configuration"""
+    config_path = Path(__file__).parents[2] / 'src' / 'resources' / 'neuro_control.yaml'
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(config_path, 'w') as f:
+        yaml.dump(data, f, default_flow_style=False)
+
 if __name__ == '__main__':
     # Create templates directory and basic templates if they don't exist
     templates_dir = Path(__file__).parent / 'templates'
