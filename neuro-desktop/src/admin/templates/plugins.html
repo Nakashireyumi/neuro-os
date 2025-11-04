@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugins - Neuro Desktop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .plugin-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #007bff;
+        }
+        .plugin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .plugin-card.disabled {
+            border-left-color: #6c757d;
+            opacity: 0.7;
+        }
+        .badge-neuro {
+            background-color: #9b59b6;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-brain"></i> Neuro Desktop Admin
+            </a>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="/">Configs</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/plugins">Plugins</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-puzzle-piece"></i> Plugins Marketplace</h1>
+            <button class="btn btn-success" onclick="refreshPlugins()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+
+        <div id="pluginsList" class="row">
+            <div class="col-12 text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadPlugins() {
+            try {
+                const response = await fetch('/api/plugins');
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderPlugins(data.plugins);
+                } else {
+                    document.getElementById('pluginsList').innerHTML = `
+                        <div class="alert alert-danger">Error loading plugins: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading plugins:', error);
+                document.getElementById('pluginsList').innerHTML = `
+                    <div class="alert alert-danger">Failed to load plugins</div>
+                `;
+            }
+        }
+
+        function renderPlugins(plugins) {
+            const container = document.getElementById('pluginsList');
+            
+            if (plugins.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No plugins found. 
+                            Add plugins to the <code>plugins/</code> directory.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = plugins.map(plugin => `
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card plugin-card ${!plugin.enabled ? 'disabled' : ''}">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                ${plugin.name}
+                                ${plugin.neuro_integration ? '<span class="badge badge-neuro">Neuro</span>' : ''}
+                            </h5>
+                            <p class="text-muted small">v${plugin.version} by ${plugin.author}</p>
+                            <p class="card-text">${plugin.description}</p>
+                            
+                            ${plugin.permissions.length > 0 ? `
+                                <div class="mb-2">
+                                    <small class="text-muted">Permissions:</small><br>
+                                    ${plugin.permissions.map(p => `<span class="badge bg-warning text-dark">${p}</span>`).join(' ')}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge ${plugin.loaded ? 'bg-success' : 'bg-secondary'}">
+                                    ${plugin.loaded ? 'Active' : 'Inactive'}
+                                </span>
+                                <button 
+                                    class="btn btn-sm ${plugin.loaded ? 'btn-danger' : 'btn-primary'}"
+                                    onclick="togglePlugin('${plugin.id}', ${plugin.loaded})">
+                                    <i class="fas fa-${plugin.loaded ? 'stop' : 'play'}"></i>
+                                    ${plugin.loaded ? 'Disable' : 'Enable'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function togglePlugin(pluginId, isLoaded) {
+            const action = isLoaded ? 'disable' : 'enable';
+            
+            try {
+                const response = await fetch(`/api/plugins/${pluginId}/${action}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    await loadPlugins();
+                } else {
+                    alert(`Failed to ${action} plugin: ${data.error}`);
+                }
+            } catch (error) {
+                console.error(`Error ${action}ing plugin:`, error);
+                alert(`Failed to ${action} plugin`);
+            }
+        }
+
+        function refreshPlugins() {
+            loadPlugins();
+        }
+
+        // Load plugins on page load
+        document.addEventListener('DOMContentLoaded', loadPlugins);
+    </script>
+</body>
+</html>
