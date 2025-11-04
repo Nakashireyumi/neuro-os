@@ -1,0 +1,11 @@
+{
+  "id": "example-plugin",
+  "name": "Example Plugin",
+  "version": "1.0.0",
+  "description": "Example plugin demonstrating Neuro Desktop plugin system",
+  "author": "nakurity",
+  "entry_point": "main.py",
+  "permissions": ["windows_control"],
+  "dependencies": [],
+  "neuro_integration": true
+}
