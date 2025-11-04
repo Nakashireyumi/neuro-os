@@ -8,7 +8,9 @@ from . import load_actions
 
 # Regionalization context provider
 try:
-    from src.dev.integration.regionalization.core import RegionalizationCore
+    print("Please wait... loading RegionalizationCore...")
+    from .regionalization.core import RegionalizationCore
+    print("RegionalizationCore loaded")
 except Exception:
     RegionalizationCore = None
 
@@ -46,7 +48,7 @@ class NeuroClient(AbstractNeuroAPI):
 
         # Send a one-time capability/context primer so Neuro understands this game
         try:
-            action_names = [a.name for a in load_actions()]
+            action_names = [a.name for a in actions]
             primer = (
                 f"Neuro-OS Windows integration is active. I can control the Windows UI via actions: "
                 f"{', '.join(action_names)}. "
@@ -122,6 +124,12 @@ class NeuroClient(AbstractNeuroAPI):
                     elif resp.get("status") == "error":
                         error = resp.get("error", {})
                         error_msg = error.get("message", "Unknown error")
+                        if (error_msg == "unsupported_action"):
+                            await self._publish_context_once() # assumes the unknown action is refresh_context
+                            # since, (0.0.3) does not have any other invalid actions (not present on windows-api)
+
+                            # TODO: add actual result handling for publishing context to neuro!
+                            return True, f"Action '{name}' completed with unknown status"
                         return False, f"Action '{name}' failed: {error_msg}"
                     else:
                         return True, f"Action '{name}' completed with unknown status"

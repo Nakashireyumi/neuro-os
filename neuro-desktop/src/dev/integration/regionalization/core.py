@@ -35,7 +35,7 @@ try:
 except ImportError:
     VisionAPIClient = None
 
-from ..types.neuro_types import (
+from ....types.neuro_types import (
     ScreenRegion, RegionType, BoundingBox, Coordinates,
     ContextData, ContextType, SystemState, NeuroAction,
     PluginRegistry, PluginType, Priority, NeuroMessageBuilder

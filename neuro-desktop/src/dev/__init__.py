@@ -44,6 +44,11 @@ tracer = Tracer(tracer_config)
 import threading
 from flask import Flask
 
+def launch_admin_dashboard():
+    """Launch the Flask admin dashboard in a separate thread"""
+    from ..admin.dashboard import app
+    app.run(debug=False, host='127.0.0.1', port=5000, use_reloader=False)
+
 async def start():
     taskslist = [] # Tasks list
 
@@ -75,20 +80,16 @@ async def start():
     taskslist.append(asyncio.create_task( # Launch client
         NeuroClient.start( # give neuro client windows-api's uri
             f"ws://{windows_api_config.get('host', '127.0.0.1')}:{windows_api_config.get('port', 8765)}",
-            f"ws://{neuro_desktop_config.get('host', '127.0.0.1')}:{neuro_desktop_config.get('port', 8766)}"
+            f"ws://{neuro_desktop_config.get('host', '127.0.0.1')}:{neuro_desktop_config.get('port', 8766)}",
+            windows_api_config.get("auth_token", "")
         )
     ))
 
     try:
-        asyncio.gather(*taskslist)
+        await asyncio.gather(*taskslist)
     except KeyboardInterrupt:
         print("Server stopped.")
     finally:
         print("[SHUTDOWN] Cleanup complete")
-
-def launch_admin_dashboard():
-    """Launch the Flask admin dashboard in a separate thread"""
-    from src.admin.dashboard import app
-    app.run(debug=False, host='127.0.0.1', port=5000, use_reloader=False)
 
 __all__ = ["start"]

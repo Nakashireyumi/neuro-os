@@ -1,4 +1,8 @@
 enabled: false
 theme: Dark
 autostart: false
-allowed_actions: []
+allowed_actions: [
+  "click", "dragrel", "dragto", "get_more_text", "get_more_windows",
+  "refresh_context", "hotkey", "keydown", "keyup", "move", "press",
+  "screenshot"
+]

@@ -183,10 +183,10 @@ neuro_relay:
 
         // Initialize CodeMirror
         document.addEventListener('DOMContentLoaded', function() {
-            {% if config_data %}
+            if (config_data) {
                 // Convert config data to YAML string
                 originalContent = `{% filter replace('\n', '\\n') | replace('\r', '') %}{{ config_data | toyaml | safe }}{% endfilter %}`;
-            {% endif %}
+            }
 
             editor = CodeMirror.fromTextArea(document.getElementById('yamlEditor'), {
                 mode: 'yaml',
