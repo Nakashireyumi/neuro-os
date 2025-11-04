@@ -1,13 +1,12 @@
-# Neuro-OS
+# Neuro Desktop
+Neuro-OS allows Neuro and Evil Neuro to interact with Windows through direct control of mouse, keyboard, and UI elements. The system now features **OCR-based UI detection** and optional **AI vision analysis** for intelligent interaction.
+
+**v0.0.2-alpha** - Enhanced UI context detection for Neuro & Evil Neuro's Windows integration.
 
 > [!CAUTION]
 > This software allows Neuro/Evil to control your Windows machine directly (mouse, keyboard, clicks).
 > You (vedal) may lose control of your system temporarily, depending on their mood.
 > **We highly recommend (vedal) using a virtual machine for usage with Neuro and Evil.**
-
-**v0.0.2-alpha** - Enhanced UI context detection for Neuro & Evil Neuro's Windows integration.
-
-Neuro-OS allows Neuro and Evil Neuro to interact with Windows through direct control of mouse, keyboard, and UI elements. The system now features **OCR-based UI detection** and optional **AI vision analysis** for intelligent interaction.
 
 **For Development**: This caution mainly applies when connected to the live Neuro backend. During development, Neuro-OS simply executes the most recent action from the API. A safety monitor and user priority system are planned for future releases.
 
