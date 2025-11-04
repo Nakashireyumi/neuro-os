@@ -1,13 +1,13 @@
 # Neuro-OS
 
+> [!CAUTION]
+> This software allows Neuro/Evil to control your Windows machine directly (mouse, keyboard, clicks).
+> You (vedal) may lose control of your system temporarily, depending on their mood.
+> **We highly recommend (vedal) using a virtual machine for usage with Neuro and Evil.**
+
 **v0.0.2-alpha** - Enhanced UI context detection for Neuro & Evil Neuro's Windows integration.
 
 Neuro-OS allows Neuro and Evil Neuro to interact with Windows through direct control of mouse, keyboard, and UI elements. The system now features **OCR-based UI detection** and optional **AI vision analysis** for intelligent interaction.
-
-> [!CAUTION]
-> This software allows Neuro/Evil to control your Windows machine directly (mouse, keyboard, clicks).
-> You may lose control of your system temporarily, depending on their mood.
-> **We highly recommend using a virtual machine for usage with Neuro and Evil.**
 
 **For Development**: This caution mainly applies when connected to the live Neuro backend. During development, Neuro-OS simply executes the most recent action from the API. A safety monitor and user priority system are planned for future releases.
 
@@ -22,7 +22,7 @@ Neuro-OS allows Neuro and Evil Neuro to interact with Windows through direct con
 ## 📦 Installation
 
 ### Prerequisites
-- Python 3.8+ with `pip`
+- Python 3.8+ with `pip` / `uv`
 - Git (with submodules support)
 - Windows 10/11
 
@@ -93,26 +93,6 @@ Visible Windows:
      Position: (0, 0), Size: 1920x1080
 ```
 
-## 📁 Repository Structure
-
-```
-repository/
-├── src/
-│   ├── regionalization/       # UI detection system
-│   │   ├── core.py           # Main regionalization
-│   │   ├── ocr_detector.py   # OCR-based detection
-│   │   └── vision_api_client.py # AI vision client
-│   ├── dev/
-│   │   ├── neuro_integration/ # Neuro API integration
-│   │   └── utils/            # Utilities
-│   └── types/
-│       └── neuro_types.py    # Type definitions
-├── windows-api/              # Windows control (submodule)
-├── CHANGELOG.md              # Version history
-├── QUICKSTART.md             # Quick start guide
-└── README.md                 # This file
-```
-
 ## 📚 Documentation
 
 - **[CHANGELOG.md](CHANGELOG.md)**: Version history and updates
@@ -124,6 +104,14 @@ repository/
 ### Windows-API Port Hangs
 - **Issue**: Port 8766 remains occupied after stopping
 - **Workaround**: Manually kill process or restart
+- **Status**: Fix planned
+
+### Jippity not knowing what to do with neuro desktop
+- **Issue**: No actual contextual goal for using this integration (this would apply to neuro/evilyn as well)
+- **Workaround**: Tell jippity what to do.
+- **Possible fixes**:
+    - Tell neuro/evil what to do
+    - Add an long term memory integration, that bundles with neuro desktop. To ensure neuro and evil's long term memory. Possibly with a worse or better implementation, who knows!
 - **Status**: Fix planned
 
 ### OCR Limitations
@@ -143,13 +131,14 @@ Contributions welcome! Please:
 MIT License - see [LICENSE](LICENSE) for details
 
 ## 🔗 Links
+Tools you may need, or want during developmemnt of a contribution
 
-- **Nakurity Backend**: https://github.com/Nakashireyumi/nakurity-backend
-- **Windows API**: https://github.com/Nakashireyumi/windows-api
-- **Neuro-sama**: https://www.twitch.tv/vedal987
+- **Unofficial Windows API (by nakurity)**: https://github.com/nakurity/windows-api
+- **Neuro SDK**: https://github.com/VedalAI/neuro-sdk
+- **Gary**: https://github.com/Govorunb/gary
 
 ---
 
 **Version**: 0.0.3-devbuild  
-**Last Updated**: 2025-01-22  
+**Last Updated**: 2025-11-04
 **Status**: 🚧 Alpha - Active Development
