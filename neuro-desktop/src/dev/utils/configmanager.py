@@ -16,16 +16,16 @@ class ConfigManager:
     def __init__(self):
         self.base_path = Path(__file__).parents[2].resolve()
         self.configs = {
-            'neuro_os': {
-                'path': self.base_path / 'src' / 'resources' / 'relay_auth.yaml',
-                'name': 'Neuro-OS Relay Authentication'
+            'neuro_desktop': {
+                'path': self.base_path.parent / 'src' / 'resources' / 'authentication.yaml',
+                'name': "Neuro Desktop's Neuro Backend Connection Settings"
             },
             'neuro_relay': {
-                'path': self.base_path.parent / 'neuro-relay' / 'src' / 'resources' / 'authentication.yaml',
-                'name': 'Neuro-Relay Authentication'
+                'path': self.base_path.parents[2] / 'neuro-relay' / 'src' / 'resources' / 'authentication.yaml',
+                'name': 'Neuro Relay Authentication'
             },
             'windows_api': {
-                'path': self.base_path.parent / 'windows-api' / 'src' / 'resources' / 'gui' / 'config' / 'authentication.yaml',
+                'path': self.base_path.parents[2] / 'windows-api' / 'src' / 'resources' / 'gui' / 'config' / 'authentication.yaml',
                 'name': 'Windows-API Authentication'
             }
         }

@@ -26,7 +26,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                <i class="fas fa-brain"></i> Neuro-OS Admin Dashboard
+                <i class="fas fa-brain"></i> Neuro Desktop Admin Dashboard
             </a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="{{ url_for('dashboard') }}">
@@ -72,7 +72,7 @@
                                 <p><strong>File Path:</strong> <code>{{ config_info.path }}</code></p>
                             </div>
                             <div class="col-md-6">
-                                {% if config_name == 'neuro_os' %}
+                                {% if config_name == 'neuro_desktop' %}
                                     <p><strong>Purpose:</strong> Configures Neuro-OS relay connection settings</p>
                                     <p><strong>Key Settings:</strong> Host, Port, Auth Token, Integrations</p>
                                 {% elif config_name == 'neuro_relay' %}
@@ -185,7 +185,7 @@ neuro_relay:
         document.addEventListener('DOMContentLoaded', function() {
             if (config_data) {
                 // Convert config data to YAML string
-                originalContent = `{% filter replace('\n', '\\n') | replace('\r', '') %}{{ config_data | toyaml | safe }}{% endfilter %}`;
+                originalContent = `{% filter replace('\n', '\\n') | replace('\r', '') %}{{ config_data | safe }}{% endfilter %}`; // commented out toyaml to prevent errors
             }
 
             editor = CodeMirror.fromTextArea(document.getElementById('yamlEditor'), {

@@ -119,7 +119,7 @@ def sync_tokens():
         results = {}
         
         # Update neuro-os
-        neuro_os_data, error = config_manager.load_config('neuro_os')
+        neuro_os_data, error = config_manager.load_config('neuro_desktop')
         if neuro_os_data and not error:
             neuro_os_data['relay_connection']['auth_token'] = token
             success, error = config_manager.save_config('neuro_os', neuro_os_data)
