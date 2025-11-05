@@ -10,7 +10,6 @@ from . import load_actions
 try:
     print("Please wait... loading RegionalizationCore...")
     from .regionalization.core import RegionalizationCore
-    print("RegionalizationCore loaded")
 except Exception:
     RegionalizationCore = None
 
@@ -26,6 +25,7 @@ class NeuroClient(AbstractNeuroAPI):
         self.name = "Neuro's Desktop"
         self._context_task = None
         self._reg = RegionalizationCore() if RegionalizationCore else None
+        print("RegionalizationCore loaded")
         self.windows_api_uri = "ws://127.0.0.1:8765"
         self.auth_token = "super-secret-token"
         self._action_in_progress = False
@@ -210,17 +210,33 @@ class NeuroClient(AbstractNeuroAPI):
         neuro_backend_uri = "ws://127.0.0.1:8000",
         auth_token = "super-secret-token"
     ):
-        async with websockets.connect(neuro_backend_uri) as websocket:
-            client = NeuroClient(websocket)
+        async def connect():
+            async with websockets.connect(neuro_backend_uri) as websocket:
+                client = NeuroClient(websocket)
+                print("Connected to Neuro backend at", neuro_backend_uri)
 
-            # Set up client
-            client.windows_api_uri = windows_api_uri
-            client.auth_token = auth_token
-            await client.initialize()
+                # Set up client
+                client.windows_api_uri = windows_api_uri
+                client.auth_token = auth_token
+                await client.initialize()
 
-            # Read messages in a loop
-            while True:
-                try:
-                    await client.read_message()
-                except websockets.exceptions.ConnectionClosed:
-                    break
+                # Read messages in a loop
+                while True:
+                    try:
+                        await client.read_message()
+                    except websockets.exceptions.ConnectionClosed:
+                        break
+        try:
+            await connect()
+        except Exception as e:
+            print(f"[NEURO_ERR] Connection error: {e}")
+            if isinstance(e, ConnectionRefusedError):
+                print("[NEURO_ERR] Is the Neuro backend running and reachable?")
+                while True:
+                    await asyncio.sleep(5)
+                    print("[NEURO] Retrying connection...")
+                    try:
+                        await connect()
+                        break
+                    except Exception as e:
+                        print(f"[NEURO_ERR] Retry failed: {e}")
