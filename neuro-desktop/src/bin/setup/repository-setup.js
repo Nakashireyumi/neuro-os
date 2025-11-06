@@ -69,7 +69,7 @@ async function ensureGit() {
       console.log("[SETUP] Using bundled Git Portable...");
       return embedded;
     }
-    throw new Error("No system or embedded Git found.");
+//     throw new Error("No system or embedded Git found.");
   }
 }
 
