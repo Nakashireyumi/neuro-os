@@ -54,7 +54,7 @@ async function ensurePython() {
       console.log("[SETUP] Using bundled WinPython...");
       return embedded;
     }
-    throw new Error("No system or embedded Python found.");
+//     throw new Error("No system or embedded Python found.");
   }
 }
 
